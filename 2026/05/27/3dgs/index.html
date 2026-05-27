@@ -1,0 +1,203 @@
+<!DOCTYPE html><html lang="ch" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>3D Gaussian Splatting 的理解 | Ozisan's site</title><meta name="author" content="Ozisan"><meta name="copyright" content="Ozisan"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="3dgs理解 简单整理一下这两天看的3dgs相关的知识。 代码部分没有看原项目代码，看的是这个,没有用cuda，还是很简单清晰的。    先是从最基础的三维到二维的投影 （在transformation.py里） 实现流程  123456789101112131415定义3D三角形   ↓模型变换（Model）   ↓视图变换（View）   ↓投影变换（Projection）   ↓透视除法（P">
+<meta property="og:type" content="article">
+<meta property="og:title" content="3D Gaussian Splatting 的理解">
+<meta property="og:url" content="https://ozisan-123.github.io/2026/05/27/3dgs/index.html">
+<meta property="og:site_name" content="Ozisan&#39;s site">
+<meta property="og:description" content="3dgs理解 简单整理一下这两天看的3dgs相关的知识。 代码部分没有看原项目代码，看的是这个,没有用cuda，还是很简单清晰的。    先是从最基础的三维到二维的投影 （在transformation.py里） 实现流程  123456789101112131415定义3D三角形   ↓模型变换（Model）   ↓视图变换（View）   ↓投影变换（Projection）   ↓透视除法（P">
+<meta property="og:locale">
+<meta property="og:image" content="https://ozisan-123.github.io/img/113.png">
+<meta property="article:published_time" content="2026-05-27T10:45:30.000Z">
+<meta property="article:modified_time" content="2026-05-27T12:08:12.227Z">
+<meta property="article:author" content="Ozisan">
+<meta property="article:tag" content="Ozisan">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ozisan-123.github.io/img/113.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "3D Gaussian Splatting 的理解",
+  "url": "https://ozisan-123.github.io/2026/05/27/3dgs/",
+  "image": "https://ozisan-123.github.io/img/113.png",
+  "datePublished": "2026-05-27T10:45:30.000Z",
+  "dateModified": "2026-05-27T12:08:12.227Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Ozisan",
+      "url": "https://Ozisan-123.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="../../../../img/logo.ico"><link rel="canonical" href="https://ozisan-123.github.io/2026/05/27/3dgs/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="../../../../css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: 'Copy Successful',
+    error: 'Copy Failed',
+    noSupport: 'Browser Not Supported'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: 'Just now',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: 'Load More'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '3D Gaussian Splatting 的理解',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="web_bg" style="background-image: url(../../../../img/114.png);"></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(../../../../img/111.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="../../../../index.html"><span class="site-name">Ozisan's site</span></a><a class="nav-page-title" href="../../../../index.html"><span class="site-name">3D Gaussian Splatting 的理解</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  Back to Home</span></span></a></span><div id="menus"></div></nav><div id="post-info"><h1 class="post-title">3D Gaussian Splatting 的理解</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">Created</span><time class="post-meta-date-created" datetime="2026-05-27T10:45:30.000Z" title="Created 2026-05-27 18:45:30">2026-05-27</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">Updated</span><time class="post-meta-date-updated" datetime="2026-05-27T12:08:12.227Z" title="Updated 2026-05-27 20:08:12">2026-05-27</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">Post Views:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="3dgs理解"><a href="#3dgs理解" class="headerlink" title="3dgs理解"></a>3dgs理解</h2><ul>
+<li>简单整理一下这两天看的3dgs相关的知识。</li>
+<li>代码部分没有看原项目代码，看的是<a target="_blank" rel="noopener" href="https://github.com/SY-007-Research/3dgs_render_python">这个</a>,没有用cuda，还是很简单清晰的。</li>
+</ul>
+<hr>
+<ul>
+<li>先是从最基础的三维到二维的投影 （在transformation.py里）</li>
+<li>实现流程</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">定义3D三角形</span><br><span class="line">   ↓</span><br><span class="line">模型变换（Model）</span><br><span class="line">   ↓</span><br><span class="line">视图变换（View）</span><br><span class="line">   ↓</span><br><span class="line">投影变换（Projection）</span><br><span class="line">   ↓</span><br><span class="line">透视除法（Perspective Divide）</span><br><span class="line">   ↓</span><br><span class="line">视口变换（Viewport）</span><br><span class="line">   ↓</span><br><span class="line">得到屏幕2D坐标</span><br><span class="line">   ↓</span><br><span class="line">画线显示</span><br></pre></td></tr></table></figure>
+<ul>
+<li>通过MVP pipline：<ul>
+<li>M：model模型变换，将模型自身的顶点坐标放到世界坐标系中（代码中给出的坐标已经是世界坐标，故用角度旋转代替了？）；</li>
+<li>V：view视图变换，将摄像机设为世界中心。</li>
+<li>P：project投影变换，实现近大远小。</li>
+</ul>
+</li>
+<li>最后映射到相机屏幕。</li>
+</ul>
+<hr>
+<p>然后是3DGS相关的（3dgs.py）<br>流程大概如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">输入3D高斯参数</span><br><span class="line">    ↓</span><br><span class="line">Preprocess（把3D高斯投影到屏幕）</span><br><span class="line">    ↓</span><br><span class="line">Render（逐像素累加颜色）</span><br><span class="line">    ↓</span><br><span class="line">输出图像</span><br></pre></td></tr></table></figure>
+<ul>
+<li>先是建立高斯球：<ul>
+<li>位置$μ&#x3D;(x,y,z)$ </li>
+<li>颜色：shs &#x3D; np.random.random((n,16,3)) （随机了吧）</li>
+<li>透明度：opacities &#x3D; np.ones((n,1))</li>
+<li>大小：scales &#x3D; np.ones((n,3))</li>
+<li>方向：rotations &#x3D; np.array([np.eye(3)] * n)</li>
+</ul>
+</li>
+<li>然后设置相机后投影。</li>
+<li>最后是最重要的Rasterizer.forward()：<ul>
+<li>先判断点是否在视锥之内。</li>
+<li>然后是MVP流程。</li>
+<li>然后就是用scale与rotation求得高斯公式中的Σ3D​</li>
+<li>然后将3d投影到2d</li>
+<li>最后render，计算色彩与alpha透明度。</li>
+</ul>
+</li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>Author: </span><span class="post-copyright-info"><a href="https://Ozisan-123.github.io">Ozisan</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>Link: </span><span class="post-copyright-info"><a href="https://ozisan-123.github.io/2026/05/27/3dgs/">https://ozisan-123.github.io/2026/05/27/3dgs/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>Copyright Notice: </span><span class="post-copyright-info">All articles on this blog are licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> unless otherwise stated.</span></div></div><div class="tag_share"><div class="post-share"><div class="social-share" data-image="../../../../img/113.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="../../../04/19/Transformer/" title="Transformer"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">Next</div><div class="info-item-2">Transformer</div></div><div class="info-2"><div class="info-item-1"> Transformer就感觉复杂的很多了，从模型的架构到算法的逻辑都是。 对所谓的多重注意力机制什么的还是云里雾里的。 代码部分这一次由ai代劳的比较多，可能对架构理解的也不是那么深刻，不过也重写了训练与测试文件，工程量要比之前一系列的卷积神经网络大的多。 这次的载体是中译英的翻译，也包含了一些无关紧要的工具函数 源代码又把模型文件放上去了，删的好麻烦 下面是模型代码部分：  123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899100101102103104105106107108109110111112113114115116117118119120121122123124125126127128129130131132133134135136137138...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="../../../../img/113.png" onerror="this.onerror=null;this.src='../../../../img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Ozisan</div><div class="author-info-description">Ozisan ozisan</div><div class="site-data"><a href="../../../../archives/"><div class="headline">Articles</div><div class="length-num">11</div></a><a href="../../../../tags/"><div class="headline">Tags</div><div class="length-num">3</div></a><a href="../../../../categories/"><div class="headline">Categories</div><div class="length-num">0</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/Ozisan-123"><i class="fab fa-github"></i><span>进来看看？虽然可能没什么东西···</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>Announcement</span></div><div class="announcement_content">I'm back！</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>Contents</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#3dgs%E7%90%86%E8%A7%A3"><span class="toc-number">1.</span> <span class="toc-text">3dgs理解</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Posts</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="../../../05/27/3dgs/" title="3D Gaussian Splatting 的理解">3D Gaussian Splatting 的理解</a><time datetime="2026-05-27T10:45:30.000Z" title="Created 2026-05-27 18:45:30">2026-05-27</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="../../../04/19/Transformer/" title="Transformer">Transformer</a><time datetime="2026-04-19T09:19:13.000Z" title="Created 2026-04-19 17:19:13">2026-04-19</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="../../../04/15/RNN-LSTM/" title="RNN LSTM">RNN LSTM</a><time datetime="2026-04-15T10:40:59.000Z" title="Created 2026-04-15 18:40:59">2026-04-15</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="../../../04/13/color-visualazition-project/" title="color visualazition project">color visualazition project</a><time datetime="2026-04-13T10:53:37.000Z" title="Created 2026-04-13 18:53:37">2026-04-13</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="../../31/ResNet/" title="ResNet">ResNet</a><time datetime="2026-03-31T07:40:47.000Z" title="Created 2026-03-31 15:40:47">2026-03-31</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;2025 - 2026 By Ozisan</span><span class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.4.2</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="Reading Mode"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="Toggle Between Light and Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle Between Single-column and Double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="Settings"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="Table of Contents"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="Back to Top"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="../../../../js/utils.js"></script><script src="../../../../js/main.js"></script><div class="js-pjax"></div><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/fireworks.min.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
